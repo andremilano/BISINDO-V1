@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS Manekin BISINDO</title>
+    <style>
+        /* Mengatur agar kanvas 3D memenuhi seluruh layar browser */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #dddddd;
+        }
+        /* Kotak Panel Kontrol di Pojok Kiri Atas */
+        #kontrol { 
+            position: absolute; 
+            top: 15px; 
+            left: 15px; 
+            background: rgba(255, 255, 255, 0.96); 
+            padding: 16px 18px; 
+            border-radius: 12px; 
+            z-index: 10; 
+            width: 320px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            max-height: calc(100vh - 30px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .header-panel {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .header-panel h3 {
+            margin: 0;
+            color: #222;
+            font-size: 18px;
+        }
+        .header-panel span {
+            font-size: 11px;
+            color: #666;
+            font-weight: normal;
+        }
+        /* Navigasi Tab */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            background: #eef2f5;
+            padding: 3px;
+            border-radius: 8px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 7px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+            text-align: center;
+        }
+        .tab-btn.aktif {
+            background: #ffffff;
+            color: #007bff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .tab-konten {
+            display: none;
+        }
+        .tab-konten.aktif {
+            display: block;
+        }
+        label {
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #444; 
+            display: block;
+            margin-bottom: 4px;
+        }
+        select, input[type="text"], input[type="number"] { 
+            width: 100%; 
+            padding: 8px 10px; 
+            margin-bottom: 10px;
+            border-radius: 6px; 
+            border: 1px solid #ccd0d5;
+            box-sizing: border-box;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        select:focus, input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        button {
+            width: 100%; 
+            margin-top: 6px; 
+            padding: 9px 12px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-sizing: border-box;
+        }
+        #btnPlayKalimat { background: #007bff; color: white; }
+        #btnPlayKalimat:hover { background: #0056b3; }
+        #btnRecord { background: #dc3545; color: white; }
+        #btnRecord:hover { background: #bd2130; }
+        #btnPlay { background: #28a745; color: white; }
+        #btnPlay:hover { background: #218838; }
+        #btnClear { background: #6c757d; color: white; }
+        #btnClear:hover { background: #5a6268; }
+        #btnExportJson { background: #17a2b8; color: white; }
+        #btnExportJson:hover { background: #117a8b; }
+        #btnImportJson { background: #6f42c1; color: white; }
+        #btnImportJson:hover { background: #59339d; }
+        #btnHandTracking { background: #087f8c; color: white; }
+        #btnHandTracking:hover { background: #066a75; }
+        button:disabled { cursor: wait; opacity: 0.7; }
+        
+        /* Chips Kata */
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+        .chip-kata {
+            background: #e9ecef;
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+        }
+        .chip-kata:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        #previewTangan {
+            position: relative;
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            margin-top: 10px;
+            overflow: hidden;
+            background: #202729;
+            border-radius: 6px;
+        }
+        #previewTangan[hidden] { display: none; }
+        #videoTangan, #canvasTangan {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        #canvasTangan { pointer-events: none; }
+        .mirror-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #444;
+            cursor: pointer;
+        }
+        .mirror-toggle input {
+            width: auto;
+            margin: 0;
+        }
+        #statusTangan { margin-top: 8px; font-size: 11px; color: #555; }
+        
+        .footer-status {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 11px;
+            color: #555;
+            line-height: 1.4;
+        }
+        #logStatus {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+    <!-- Import Map Resmi untuk mengarahkan modul local "three" ke library Node Modules -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./node_modules/three/build/three.module.js",
+          "three/examples/jsm/loaders/GLTFLoader.js": "./node_modules/three/examples/jsm/loaders/GLTFLoader.js",
+          "three/examples/jsm/loaders/FBXLoader.js": "./node_modules/three/examples/jsm/loaders/FBXLoader.js",
+          "three/examples/jsm/controls/OrbitControls.js": "./node_modules/three/examples/jsm/controls/OrbitControls.js",
+          "three/examples/jsm/controls/TransformControls.js": "./node_modules/three/examples/jsm/controls/TransformControls.js"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div id="kontrol">
+        <div class="header-panel">
+            <h3>CMS Manekin BISINDO</h3>
+            <span>Animator & Penerjemah Bahasa Isyarat</span>
+        </div>
+
+        <label for="pilihModel">Model 3D Aktif:</label>
+        <select id="pilihModel">
+            <option value="/T-Pose.fbx" selected>Manekin Mixamo (T-Pose.fbx)</option>
+            <option value="/avatar.glb">Avatar Karakter (avatar.glb)</option>
+        </select>
+
+        <!-- Tab Navigasi -->
+        <div class="tab-nav">
+            <button class="tab-btn aktif" data-tab="tabKalimat">💬 Kalimat</button>
+            <button class="tab-btn" data-tab="tabManual">🎮 Manual</button>
+            <button class="tab-btn" data-tab="tabAI">📷 AI Kamera</button>
+            <button class="tab-btn" data-tab="tabFile">💾 File</button>
+        </div>
+
+        <!-- 1. TAB PENERJEMAH KALIMAT (TEXT-TO-SIGN) -->
+        <div id="tabKalimat" class="tab-konten aktif">
+            <label for="inputKalimat">Ketik Kalimat / Kata:</label>
+            <input type="text" id="inputKalimat" placeholder="Contoh: halo kamu apa kabar" value="halo terima kasih">
+            
+            <label>Pilih Kata Cepat (Klik untuk menambah):</label>
+            <div id="daftarChips" class="chips-container">
+                <!-- Diisi otomatis oleh JavaScript -->
+            </div>
+
+            <button id="btnPlayKalimat" type="button">▶️ Terjemahkan & Mainkan</button>
+            <button id="btnStopKalimat" type="button" style="background:#6c757d; color:white; display:none;">⏹️ Hentikan Gerakan</button>
+        </div>
+
+        <!-- 2. TAB MANUAL POSING & CMS TIMELINE -->
+        <div id="tabManual" class="tab-konten">
+            <label for="pilihSendi">Pilih Sendi Aktif:</label>
+            <select id="pilihSendi">
+                <option value="">-- Klik Manekin / Pilih Sendi --</option>
+            </select>
+            
+            <label for="inputDetik">Durasi ke Pose Ini (detik):</label>
+            <input type="number" id="inputDetik" value="1.0" step="0.1" min="0.1">
+            
+            <button id="btnRecord">🔴 Rekam Gerakan</button>
+            <button id="btnPlay">▶️ Putar Rekaman Timeline</button>
+            <button id="btnClear">🗑️ Hapus Rekaman / Reset</button>
+            <p style="color: #666; font-size: 11px; font-style: italic; margin-top: 8px;">💡 Klik kiri langsung pada bagian tubuh manekin untuk memilih tulang/jari dengan cepat.</p>
+        </div>
+
+        <!-- 3. TAB AI MOTION CAPTURE (MEDIAPIPE HOLISTIC) -->
+        <div id="tabAI" class="tab-konten">
+            <label>Pelacakan Holistic (Tubuh, Tangan & Wajah) via Webcam:</label>
+            <button id="btnHandTracking" type="button">Mulai Pelacakan MediaPipe</button>
+            <label class="mirror-toggle">
+                <input type="checkbox" id="chkMirrorTracking" checked>
+                Mode Cermin (Mirror seperti webcam)
+            </label>
+            <div id="previewTangan" hidden>
+                <video id="videoTangan" autoplay playsinline muted></video>
+                <canvas id="canvasTangan"></canvas>
+            </div>
+            <p id="statusTangan" aria-live="polite">Webcam nonaktif.</p>
+        </div>
+
+        <!-- 4. TAB SIMPAN & MUAT FILE (JSON) -->
+        <div id="tabFile" class="tab-konten">
+            <label>Ekspor & Impor Rekaman Animasi:</label>
+            <button id="btnExportJson" type="button">💾 Unduh Rekaman (.JSON)</button>
+            <input type="file" id="inputFileJson" accept=".json" style="display: none;">
+            <button id="btnImportJson" type="button">📂 Muat File Rekaman (.JSON)</button>
+            <p style="color: #666; font-size: 11px; margin-top: 8px;">File JSON menyimpan seluruh koordinat rotasi sendi manekin dan dapat dimuat kapan saja.</p>
+        </div>
+        
+        <div class="footer-status">
+            <b>Status:</b> <span id="logStatus">Memuat model 3D...</span>
+        </div>
+    </div>
+
+    <!-- Menghubungkan skrip utama dengan sistem modular Vite -->
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
